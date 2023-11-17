@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "247056306377",
+    "project_id": "tc2007b-ad2023-501-rn",
+    "storage_bucket": "tc2007b-ad2023-501-rn.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:247056306377:android:1e851b244c9d8682503d18",
+        "android_client_info": {
+          "package_name": "com.react2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB69NmYbyjXJQo5oO8_qaM1VJZDy3j0AKY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
