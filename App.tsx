@@ -13,8 +13,16 @@
  * 
  * npx react-native start
  * 
+ * instalamos el google-signin:
+ * npm i @react-native-google-signin/google-signin
+ * 
  * obtención de SHA-1: 
  * https://developers.google.com/android/guides/client-auth
+ * 
+ * para hacerlo para nuestro proyecto, ubica una terminal en 
+ * la raiz del proyecto y corre:
+ * keytool -list -v -alias androiddebugkey -keystore ./android/app/debug.keystore
+ * password: android
  */
 
 import React, { useEffect, useState } from 'react';
@@ -43,6 +51,15 @@ import {
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import { 
+  GoogleSignin, 
+  GoogleSigninButton 
+} from '@react-native-google-signin/google-signin';
+
+// de tu google-services busca el client tipo 3
+GoogleSignin.configure({
+  webClientId: '247056306377-tgj4cihklvq3ac993pn7uned67c92mfm.apps.googleusercontent.com'
+});
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -248,8 +265,51 @@ function AppFlatList() {
         </View>
       )}
       />
+      <GoogleSigninButton 
+        size={GoogleSigninButton.Size.Wide}
+        color={GoogleSigninButton.Color.Dark}
+        onPress={() => {
+          LoginConGoogle()
+          .then(() => {
+            console.log("SIGNINEADO CON GOOGLE");
+          });
+        }}
+      />
+      <Button 
+        title="usuario actual"
+        onPress={() => {
+          if(auth().currentUser != null)
+            console.log("USUARIO ACTUAL: ", auth().currentUser?.email);
+          else
+            console.log("SIN USUARI0");
+        }}
+      />
+      <Button
+        title="log out"
+        onPress={() => {
+          auth()
+          .signOut()
+          .then(() => {
+            console.log("USUARIO LOGOUTEADO");
+          });
+        }}
+      />
     </View>
   );
+}
+
+async function LoginConGoogle() {
+  
+  // checar si user tiene soporte para google play services 
+  await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true});
+
+  // hacer sign in
+  const { idToken } = await GoogleSignin.signIn();
+
+  // obtener credencial de google
+  const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+  return auth().signInWithCredential(googleCredential);
 }
 
 const styles = StyleSheet.create({
