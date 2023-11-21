@@ -12,12 +12,17 @@
  * npm install --save @react-native-firebase/firestore
  * 
  * npx react-native start
+ * 
+ * obtención de SHA-1: 
+ * https://developers.google.com/android/guides/client-auth
  */
 
 import React, { useEffect, useState } from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  ActivityIndicator,
   Button,
+  FlatList,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -195,6 +200,58 @@ function App(): JSX.Element {
   );
 }
 
+function AppFlatList() {
+
+  // en typescript podemos definir un tipo sin la necesidad
+  // de declarar una variable
+  type JSONAnimalito = {edad: number, nombre: string, peso: number};
+
+  // estados para llevar control del request
+  const[animalitos, setAnimalitos] = useState<JSONAnimalito[]>([]);
+  const[animalitosCargados, setAnimalitosCargados] = useState(false);
+
+  // inscribirnos para recibir updates en tiempo real de actualizaciones de la BD
+  useEffect(() => {
+    firestore()
+    .collection("Animalitos")
+    .onSnapshot(querySnapshot => {
+
+      const updateAnimalitos : any[] = [];
+      querySnapshot.forEach(docActual => {
+
+        // ... -> operador "spread"
+        // abrir todos los datos de un iterable para generar una estructura
+        // con todos ellos
+        // sin spread - iterar a través de los elementos de la estructura y 
+        // agregarlos uno por uno
+        updateAnimalitos.push({...docActual.data()});
+      });
+
+      setAnimalitos(updateAnimalitos);
+      setAnimalitosCargados(true);
+    });
+  }, []);
+
+  if(!animalitosCargados){
+    return <ActivityIndicator />;
+  }
+
+  return (
+    <View>
+      <FlatList 
+      data = {animalitos}
+      renderItem = {({item}) => (
+        <View>
+          <Text>edad: {item.edad}</Text>
+          <Text>nombre: {item.nombre}</Text>
+          <Text>peso: {item.peso}</Text>
+        </View>
+      )}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,
@@ -214,4 +271,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default AppFlatList;
