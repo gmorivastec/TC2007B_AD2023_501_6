@@ -7,9 +7,9 @@
  * librería que estamos usando: https://rnfirebase.io/
  * 
  * npx react-native@latest init React2 --template react-native-template-typescript
- * npm install --save @react-native-firebase/app
- * npm install --save @react-native-firebase/auth
- * npm install --save @react-native-firebase/firestore
+ * npm install --save @react-native-firebase/app@18.6.1
+ * npm install --save @react-native-firebase/auth@18.6.1
+ * npm install --save @react-native-firebase/firestore@18.6.1
  * 
  * npx react-native start
  * 
@@ -23,6 +23,11 @@
  * la raiz del proyecto y corre:
  * keytool -list -v -alias androiddebugkey -keystore ./android/app/debug.keystore
  * password: android
+ * 
+ * Notificaciones:
+ * 
+ * npm install --save @react-native-firebase/messaging@18.6.1 -> notificaciones detonadas por mensaje remoto
+ * npm install --save @notifee/react-native -> notificaciones locales
  */
 
 import React, { useEffect, useState } from 'react';
@@ -39,6 +44,7 @@ import {
   TextInput,
   useColorScheme,
   View,
+  Alert,
 } from 'react-native';
 
 import {
@@ -51,10 +57,33 @@ import {
 
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
 import { 
   GoogleSignin, 
   GoogleSigninButton 
 } from '@react-native-google-signin/google-signin';
+
+import 
+  notifee, 
+  { 
+    TimestampTrigger, 
+    TriggerType,
+    AndroidImportance,
+    AndroidVisibility,
+    Trigger,
+    RepeatFrequency,
+    IntervalTrigger,
+    TimeUnit
+  } from '@notifee/react-native';
+
+
+messaging().setBackgroundMessageHandler(async remoteMessage=> {
+  console.log("mensajito remoto en background! ", JSON.stringify(remoteMessage));
+});
+
+notifee.onBackgroundEvent(async ({type, detail}) => {
+  console.log("evento en background: ", detail);
+});
 
 // de tu google-services busca el client tipo 3
 GoogleSignin.configure({
@@ -312,6 +341,120 @@ async function LoginConGoogle() {
   return auth().signInWithCredential(googleCredential);
 }
 
+function Notificaciones() 
+{
+
+  async function notificacionOnDemand() {
+
+    // si están en iOS poner esto
+    await notifee.requestPermission();
+
+    // si están en android hay que poner un canal
+    const channelId = await notifee.createChannel({
+      id: "canalito",
+      name: "El canalito de las notificaciones"
+    });
+
+    // aquí es donde detonamos la notificación
+    await notifee.displayNotification({
+      title: "Notificación local on demand",
+      body: "una notificación local increible",
+      android: {
+        channelId,
+        pressAction: {
+          id: 'default' // si no tiene eso al tocarla no abre la app
+        }
+      }
+    });
+  }
+
+  async function notificacionConTimestamp(){
+
+    // obtener fecha de hoy 
+    const date = new Date(Date.now());
+    date.setHours(8);
+    date.setMinutes(33);
+
+    // vamos a crear una notificación que hace uso de un detonate
+    // (trigger)
+
+    // lo primero es crear un trigger
+    const trigger : TimestampTrigger = {
+      type: TriggerType.TIMESTAMP,
+      repeatFrequency: RepeatFrequency.WEEKLY,
+      timestamp: date.getTime() // timestamp - valor numérico que representa el tiempo transcurrido en milisegundos desde la media noche del 1ero de enero de 1970 UTC 
+    };
+
+    notificacionConTrigger(trigger);
+  }
+  
+  async function notificacionConIntervalo() {
+    
+    const trigger: IntervalTrigger = {
+      type: TriggerType.INTERVAL,
+      interval: 15,
+      timeUnit: TimeUnit.MINUTES
+    };
+
+    notificacionConTrigger(trigger);
+  }
+
+  async function notificacionConTrigger(trigger: Trigger) {
+
+    const channelId = await notifee.createChannel({
+      id: "trigger",
+      name: "notificacion con trigger"
+    });
+
+    await notifee.createTriggerNotification(
+      {
+        title: 'Notificacion con trigger',
+        body: 'acuerdate de este pendiente!',
+        android: {
+          channelId
+        }
+      },
+      trigger
+    );
+  }
+
+  useEffect(() => {
+
+    console.log("suscribiendose");
+
+    messaging().onMessage(async remoteMessage => {
+      Alert.alert("Mensajito llego: ", JSON.stringify(remoteMessage));
+    });
+  }, []);
+
+  return (
+    <View>
+      <Text>Notificaciones</Text>
+      <Button 
+        title='NOTIFICACIÓN ON DEMAND'
+        onPress={() => {
+          console.log("LLAMANDO NOTIFICACION ON DEMAND");
+          notificacionOnDemand();
+        }}
+      />
+      <Button 
+        title='NOTIFICACIÓN CON TRIGGER'
+        onPress={() => {
+          console.log("LLAMANDO NOTIFICACION CON TRIGGER");
+          notificacionConTimestamp();
+        }}
+      />
+      <Button 
+        title='NOTIFICACIÓN CON INTERVALO'
+        onPress={() => {
+          console.log("LLAMANDO NOTIFICACION CON INTERVALO");
+          notificacionConIntervalo();
+        }}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,
@@ -331,4 +474,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AppFlatList;
+export default Notificaciones;
