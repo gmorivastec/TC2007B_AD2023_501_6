@@ -76,6 +76,8 @@ import
     TimeUnit
   } from '@notifee/react-native';
 
+import { Camara } from './Camara';
+
 
 messaging().setBackgroundMessageHandler(async remoteMessage=> {
   console.log("mensajito remoto en background! ", JSON.stringify(remoteMessage));
@@ -474,4 +476,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Notificaciones;
+export default Camara;
